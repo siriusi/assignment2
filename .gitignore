@@ -1,4 +1,8 @@
 *.swp
+
 *.pyc
+
 .env/*
+
 /BN backward/
+/.ipynb_checkpoints
