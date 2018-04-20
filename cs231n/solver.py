@@ -162,6 +162,7 @@ class Solver(object):
 
         # Make a deep copy of the optim_config for each parameter
         self.optim_configs = {}
+        #print([x for x in self.model.params.keys()])
         for p in self.model.params:
             d = {k: v for k, v in self.optim_config.items()}
             self.optim_configs[p] = d
