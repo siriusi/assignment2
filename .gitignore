@@ -1,8 +1,6 @@
 *.swp
-
 *.pyc
-
 .env/*
-
 /BN backward/
-/.ipynb_checkpoints
+/.ipynb_checkpoints/
+/cs231n/inception_V3.log/

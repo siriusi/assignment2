@@ -4,6 +4,7 @@
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 
+"""
 flags.DEFINE_integer('batch_size', 100, 'batch size')
 flags.DEFINE_integer('num_epochs', 35, 'number of epochs')
 flags.DEFINE_float('learning_rate', 0.04, 'init learning rate')
@@ -14,6 +15,7 @@ flags.DEFINE_float('weight_decay', 0.0002, 'L2 regularizer weight decay rate')
 
 flags.DEFINE_integer('print_every', 5, 'how often to print training status')
 flags.DEFINE_string('name', None, 'name of result save dir')
+"""
 
 class SqueezeNet:
     def __init__(self, img_shape, num_classes, normalize_decay = 0.999, weight_decay = 0.0002, clip_norm = 5.0):
@@ -71,18 +73,27 @@ class SqueezeNet:
             squeeze_tensor = self.__squeeze(input_tensor, squeeze_depth)
             expand_tensor = self.__expand(squeeze_tensor, expand_depth)
         return expand_tensor
+    
     def __conv2d(self, input_tensor, num_outputs, kernel_size, stride=1, scope=None, is_training=True):
         #decay是指在求滑动平均时的衰减，就是前面的数据影响会小一点
         #fused是一个融合了几个操作的bn，比普通bn速度快
         return layers.conv2d(input_tensor, num_outputs, kernel_size, stride=stride, scope=scope,data_format="NHWC",
                       weights_regularizer=layers.l2_regularizer(self.weight_decay), normalizer_fn=layers.batch_norm,
-                      normalizer_params={"decay" = self.normalize_decay, "fused" = True, 'is_training': is_training}
-        
-
+                      normalizer_params={'is_training': is_training, "fused" : True, "decay" : self.normalize_decay})
+    
     def __squeeze(self, input_tensor, squeeze_depth):
-        return self.__conv2d(input_tensor, squeeze_depth, [1, 1], stride=1, scope=None, is_training=True)
-                               
+        return self.__conv2d(input_tensor, squeeze_depth, [1, 1], scope="squeeze")
+                           
     def __expand(self, input_tensor, expand_depth):
-        expand_1X1 = __conv2d(input_tensor, expand_depth, [1, 1], stride=1, scope='expand_1X1')
-        expand_3X3 = __conv2d(input_tensor, expand_depth, [3, 3], stride=1, scope='expand_3X3')    
-        return tf.concat(expand_1X1, expand_3X3)                
+        expand_1X1 = self.__conv2d(input_tensor, expand_depth, [1, 1],scope='expand_1X1')
+        expand_3X3 = self.__conv2d(input_tensor, expand_depth, [3, 3], scope='expand_3X3')    
+        return tf.concat([expand_1X1, expand_3X3], 3)   
+    """
+    def __squeeze(self, input_tensor, squeeze_depth):
+        return self.__conv2d(input_tensor, squeeze_depth, [1, 1], scope='squeeze')
+
+    def __expand(self, input_tensor, expand_depth):
+        expand_1by1 = self.__conv2d(input_tensor, expand_depth, [1, 1], scope='expand_1by1')
+        expand_3by3 = self.__conv2d(input_tensor, expand_depth, [3, 3], scope='expand_3by3')
+        return tf.concat([expand_1by1, expand_3by3], 3)
+    """
